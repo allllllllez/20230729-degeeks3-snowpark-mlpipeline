@@ -1,0 +1,14 @@
+version: 2
+
+sources:
+  - name: tpc_h
+    database: snowflake_sample_data
+    schema: tpch_sf1
+    tables:
+      - name: orders
+      - name: lineitem
+  - name: degeeks_ho_db
+    schema: public
+    tables:
+      - name: orders
+      - name: lineitem

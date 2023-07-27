@@ -1,0 +1,14 @@
+degeeks_dbt:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: <org_name>-<account_name>
+      user: <your_username>
+      password: <your_password>
+      role: SYSADMIN
+      database: DEGEEKS_HO_DB
+      warehouse: DEGEEKS_HO_WH
+      schema: PUBLIC
+      threads: 8
+      client_session_keep_alive: False

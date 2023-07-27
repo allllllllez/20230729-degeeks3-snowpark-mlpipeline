@@ -1,0 +1,26 @@
+#################################################
+# Usage:
+#     * Start Snowpark + dbt + Airflow
+#         docker compose up -d && docker compose exec handson bash
+# Requirements:
+#     * Snowflake user & password
+#################################################
+version: "3.8"
+services:
+  handson:
+    container_name: degeeks-snowpark-mlpipeline
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports: # 使用可能なポートを指定してください
+      - 8080:8080 # Airflow
+      - 8888:8888 # Jupyter Notebook
+    volumes:
+      # TODO：cmd の場合は。。。？
+      - $PWD/handson:/home/handson
+    working_dir: /home/handson
+    tty: true
+    # command: ["bash", "--login"]
+    entrypoint: ["tail", "-F", "/dev/null"]
+    environment:
+      - AIRFLOW_HOME=/home/handson/airflow
