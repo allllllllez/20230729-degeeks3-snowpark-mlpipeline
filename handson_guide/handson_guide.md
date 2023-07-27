@@ -53,7 +53,7 @@ Jupyter Notebook とは、ブラウザ上でプログラムの作成・実行が
 Docker コンテナを起動したターミナルで、次のコマンドを実行してください。
 
 ```
-# cd handson/notebook
+# cd /home/handson/notebook
 # jupyter notebook --port=8888 --ip=* --allow-root
 ```
 
@@ -79,18 +79,18 @@ Jupyter notebook 起動の際、必要に応じてオプションを変更して
 
 ```python
 connection_parameters = {
-    'account': '<org_name>-<account_name>',
-    'user': '<your_username>',
-    'password': '<your_password>',
-    'role': 'SYSADMIN',
-    'database': 'DEGEEKS_HO_DB',
-    'schema': 'PUBLIC',
-    'warehouse': 'DEGEEKS_HO_WH'
+    'account': '<org_name>-<account_name>',  # お使いの Snowflake アカウントの識別子
+    'user': '<your_username>',  # Snowflake アカウントにサインインするユーザー名
+    'password': '<your_password>',  # ユーザーのパスワード
+    'role': 'SYSADMIN',  # ハンズオンで使用するロール。変更は不要です
+    'database': 'DEGEEKS_HO_DB',  # ハンズオンで使用するデータベース。存在しなければ新規作成します（「gegeeks_ho_notebook.ipynb」をご参照ください）
+    'schema': 'PUBLIC',  # ハンズオンで使用するスキーマ
+    'warehouse': 'DEGEEKS_HO_WH'  # ハンズオンで使用するウェアハウス。存在しなければ新規作成します（「gegeeks_ho_notebook.ipynb」をご参照ください）
 }
 ```
 
 [`account` に指定するアカウント識別子](https://docs.snowflake.com/ja/developer-guide/python-connector/python-connector-api#label-account-format-info)は、Snowsight 左下にあるメニューから「Copy Account Identifier（アカウント識別子をコピー）」をクリックして取得してください。
-コピーしたアカウント識別子は `<org_name>-<account_name>` という形式になっています。 `.` を `-` に書き換えて記入してください。
+コピーしたアカウント識別子は `<org_name>.<account_name>` という形式になっています。 `.` を `-` に書き換えて記入してください。
 
 <img src="./img/account_identifier.png" width=1000>
 
@@ -140,7 +140,7 @@ dbt:
 ターミナル上で、dbt プロジェクトのフォルダに移動してください。
 
 ```
-# cd /home/handson/dbt/dbt_ml
+# cd /home/handson/dbt/ml_dbt/
 ```
 
 移動したのち、次のコマンドを実行してください：
@@ -165,7 +165,7 @@ dbt:
 ### SQL でモデルを定義する
 
 それでは、サンプルデータセット tpc-h を使ったテーブルを dbt で定義してみましょう。
-tpc-h の定義は `sources.yml` に記載されています：
+tpc-h の定義は `models/sources.yml` に記載されています：
 
 ```yml
 version: 2
@@ -184,7 +184,7 @@ sources:
       - name: lineitem
 ```
 
-tpc-h を使ったテーブル `example1` は `example1.sql` で定義します：
+tpc-h を使ったテーブル `example1` は `models/example1.sql` で定義します：
 
 ```sql
 {{ config(materialized='table') }}
@@ -223,7 +223,7 @@ dbt を実行し、モデル定義を実体化させてみましょう。
 
 ### Python でモデルを定義する
 
-次に、同じく tpc-h を使ったテーブル `example2` を定義します。 `example2.py` で定義します：
+次に、同じく tpc-h を使ったテーブル `example2` を定義します。 `models/example2.py` で定義します：
 
 ```python
 from snowflake.snowpark.functions import sum, avg, count, col, dateadd, lit, to_date
@@ -289,13 +289,13 @@ python で DAG（有向非巡回グラフ） を記述して、依存関係が�
 
 Apache Airflow を起動します。Web アプリとスケジューラの両方を起動する必要があります。
 
-**Web アプリ起動：**
+**Web UIの起動**
 
 ```
 # airflow webserver --port 8080
 ```
 
-**スケジューラ起動**
+**スケジューラの起動（別ターミナルを起動してください）**
 
 ```
 # airflow scheduler
@@ -356,21 +356,26 @@ hello >> world
 
 実行してみましょう。
 
-1. 画面右側「▶️」マークから「Trigger dag」を選択
+1. 画面右側「▶️」マークから「Trigger DAG」を選択
 2. しばらく待つ
 3. Success（緑のアイコン）が表示されればOKです
+
+<img src="./img/airflow_example1_success.png" width=300>
 
 ### dbt を実行してみよう
 
 続けて、dbt を実行してみましょう。
-実行確認のため、一度 Snowflake 上に作成されたテーブルを削除しておくとよいでしょう。
+あとで実行結果を確認する際に使用するため、先ほど作成したテーブルを別名にしておきます。
+Snowsight で、次のクエリを実行してください。
 
 ```sql
-drop table example1;
-drop table example2;
+alter table DEGEEKS_HO_DB.PUBLIC.example1 
+    rename to DEGEEKS_HO_DB.PUBLIC.example1_dbt;
+alter table DEGEEKS_HO_DB.PUBLIC.example2 
+    rename to DEGEEKS_HO_DB.PUBLIC.example2_dbt;
 ```
 
-リストから `dag_example2` を選択してください。
+画面上部の「DAGs」をクリックしたあと、リストから `dag_example2` を選択してください。
 
 <img src="./img/airflow_example2.png" width=1000>
 
@@ -404,13 +409,28 @@ with DAG(
 
 実行してみましょう。
 
-1. 画面右側「▶️」マークから「Trigger dag」を選択
+1. 画面右側「▶️」マークから「Trigger DAG」を選択
 2. しばらく待つ
 3. Success（緑のアイコン）が表示されればOKです
+
+<img src="./img/airflow_example2_success.png" width=300>
 
 Snowflake上にテーブルが作成されていることを確認してみましょう。
 
 <img src="./img/airflow_example2_result.png" width=1000>
+
+さらに、dbt で作成したテーブルと比較してみましょう。
+
+```sql
+with result_except as (
+    select * from DEGEEKS_HO_DB.PUBLIC.example1
+    except
+    select * from DEGEEKS_HO_DB.PUBLIC.example1_dbt
+)
+select count(1) from result_except;
+```
+
+結果は0件になります。同じ処理が行われていることがわかりますね。
 
 ## ML を動かしてみよう
 ### Notebook で Snowpark な ML のコードを書いてみる
@@ -488,7 +508,7 @@ order by order_date asc
 
 </details>
 
-- トレーニングセット： `/models/train.sql`
+- トレーニングセット： `models/train.sql`
 
 <details>
 <summary>クエリ</summary>
@@ -505,7 +525,7 @@ where
 
 </details>
 
-- テストセット： `/models/test.sql`
+- テストセット： `models/test.sql`
 
 <details>
 <summary>クエリ</summary>
@@ -523,7 +543,7 @@ where
 
 </details>
 
-- 学習と予測： `/models/regression_model.py`
+- 学習と予測： `models/regression_model.py`
 
 <details>
 <summary>クエリ</summary>
@@ -583,6 +603,7 @@ def model(dbt, session):
 
 <img src="./img/dbt_regression_model.png" width=1000>
 
+<img src="./img/dbt_regression_model_graph.png" width=1000>
 
 ### Airflow × dbt × Snowpark で MLパイプライン
 
@@ -629,19 +650,34 @@ with DAG(dag_id='dag_example3', default_args=default_args, schedule_interval=Non
 dbt_run
 ```
 
-実行する前に、Snowflake 上のテーブルを削除しておきましょう。
+先ほどの dbt 実行時と同じく、あとで実行結果を確認する際に使用するため、先ほど作成したテーブルを別名にしておきます。
+Snowsight で、次のクエリを実行してください。
 
 ```sql
-drop table regression_model;
+alter table DEGEEKS_HO_DB.PUBLIC.regression_model 
+    rename to DEGEEKS_HO_DB.PUBLIC.regression_model_dbt;
 ```
 
-削除したら、DAGを手動実行してください（ 「Airflow から動かしてみよう」参照）
+別名に変更したあと、DAGを手動実行してください（ 「Airflow から動かしてみよう」参照）
 
 <img src="./img/airflow_dbt_snowpark.png" width=1000>
 
 DAGが正常終了していることを確認したら、Snowflake上にテーブルが作成されていることを確認しましょう。
 
 <img src="./img/dbt_regression_model.png" width=1000>
+
+ここでも、dbt で作成したテーブルと比較してみましょう。
+
+```sql
+with result_except as (
+    select * from DEGEEKS_HO_DB.PUBLIC.regression_model
+    except
+    select * from DEGEEKS_HO_DB.PUBLIC.regression_model_dbt
+)
+select count(1) from result_except;
+```
+
+結果は0件になります。こちらも、同じ処理が行われていることがわかりますね。
 
 これで、Airflow と dbt と Snowpark による MLパイプラインを動かすことができました。
 
