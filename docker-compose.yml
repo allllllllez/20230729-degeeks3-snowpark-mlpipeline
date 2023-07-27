@@ -16,8 +16,9 @@ services:
       - 8080:8080 # Airflow
       - 8888:8888 # Jupyter Notebook
     volumes:
-      # TODO：cmd の場合は。。。？
-      - $PWD/handson:/home/handson
+      - type: bind
+        source: ./handson
+        target: /home/handson
     working_dir: /home/handson
     tty: true
     # command: ["bash", "--login"]
