@@ -4,7 +4,6 @@ FROM ubuntu:22.10
 # Argments
 ###############################################################################
 
-# TODO: もし 3.10（PuPr）でも問題ないようならバージョンアップする
 ARG python_version=3.8.16
 
 ARG airflow_version=2.5.0
@@ -23,7 +22,6 @@ ENV TZ=UTC
 # Install tools
 ###############################################################################
 
-# NOTE：Python 3.10 で問題ないとなれば、 apt install build-essential zlib1g-dev ... ldconfig "/opt/Python${python_version}" は不要かも
 USER root
 RUN apt update && \
   apt -y upgrade && \
@@ -56,6 +54,5 @@ RUN pip install --upgrade pip && \
     dbt-snowflake==1.5.2 airflow-dbt==0.4.0 \
     numpy==1.23.4 pandas==1.5.1 xgboost==1.5.0 \
     cachetools==4.2.2 dill==0.3.6 matplotlib==3.6.3 && \
-  # AirFloe TODO: 別サービスにして立ち上げっぱなしにしたら？
   CONSTRAINT_URL="https://raw.githubusercontent.com/apache/airflow/constraints-${airflow_version}/constraints-no-providers-${airflow_python_version}.txt" && \
   pip install "apache-airflow==${airflow_version}" --constraint "${CONSTRAINT_URL}"
